@@ -6,7 +6,7 @@ Keras has a neat API to view the visualization of the model which is very helpfu
 
 - Download the `summary.py` file.
 
-```
+```python
 from summary import summary
 summary(your_model, input_size=(channels, H, W))
 ```
@@ -17,7 +17,7 @@ summary(your_model, input_size=(channels, H, W))
 
 #### CNN for MNSIT
 
-```
+```python
 import torch.nn as nn
 import torch.nn.functional as F
 from summary import summary
@@ -65,7 +65,7 @@ Non-trainable params: 0
 #### VGG16
 
 
-```
+```python
 from torchvision import models
 from summary import summary
 
