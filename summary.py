@@ -61,7 +61,7 @@ def summary(model, input_size):
             h.remove()
 
         print('----------------------------------------------------------------')
-        line_new = '{:>20}  {:>25} {:>15}'.format('Layer (type)', 'Output Shpae', 'Param #')
+        line_new = '{:>20}  {:>25} {:>15}'.format('Layer (type)', 'Output Shape', 'Param #')
         print(line_new)
         print('================================================================')
         total_params = 0
