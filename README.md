@@ -19,6 +19,7 @@ summary(your_model, input_size=(channels, H, W))
 #### CNN for MNSIT
 
 ```python
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
@@ -42,11 +43,13 @@ class Net(nn.Module):
         return F.log_softmax(x, dim=1)
 
 model = Net()
-```
+if torch.cuda.is_available():
+    model.cuda()
 
-```
 summary(model, (1, 28, 28))
+```
 
+```
 ----------------------------------------------------------------
         Layer (type)               Output Shape         Param #
 ================================================================
@@ -67,17 +70,20 @@ Non-trainable params: 0
 
 
 ```python
+import torch
 from torchvision import models
 from torchsummary import summary
 
 vgg = models.vgg16()
-```
+if torch.cuda.is_available():
+    vgg.cuda()
 
-
-
-```
 summary(vgg, (3, 224, 224))
+```
 
+
+
+```
 ----------------------------------------------------------------
         Layer (type)               Output Shape         Param #
 ================================================================
