@@ -4,10 +4,11 @@ Keras has a neat API to view the visualization of the model which is very helpfu
 
 ### Usage
 
-- Download the `summary.py` file.
+- `pip install torchsummary` or 
+- `git clone https://github.com/sksq96/pytorch-summary`
 
 ```python
-from summary import summary
+from torchsummary import summary
 summary(your_model, input_size=(channels, H, W))
 ```
 
@@ -20,7 +21,7 @@ summary(your_model, input_size=(channels, H, W))
 ```python
 import torch.nn as nn
 import torch.nn.functional as F
-from summary import summary
+from torchsummary import summary
 
 class Net(nn.Module):
     def __init__(self):
@@ -67,7 +68,7 @@ Non-trainable params: 0
 
 ```python
 from torchvision import models
-from summary import summary
+from torchsummary import summary
 
 vgg = models.vgg16()
 ```
