@@ -136,4 +136,5 @@ Non-trainable params: 0
 ### References
 
 - The code is borrowed from [this PyTorch issue](https://github.com/pytorch/pytorch/issues/2001).
+- Thanks to @ncullen93 and @HTLife. 
 
