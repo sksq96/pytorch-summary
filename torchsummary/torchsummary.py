@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 
 
-def summary(model, input_size):
+def _summary(model, input_size):
         def register_hook(module):
             def hook(module, input, output):
                 class_name = str(module.__class__).split('.')[-1].split("'")[0]
@@ -33,17 +33,14 @@ def summary(model, input_size):
                not isinstance(module, nn.ModuleList) and 
                not (module == model)):
                 hooks.append(module.register_forward_hook(hook))
-                
+
+        input_size = list(input_size)                
         if torch.cuda.is_available():
             dtype = torch.cuda.FloatTensor
         else:
             dtype = torch.FloatTensor
         
-        # check if there are multiple inputs to the network
-        if isinstance(input_size[0], (list, tuple)):
-            x = [Variable(torch.rand(1,*in_size)).type(dtype) for in_size in input_size]
-        else:
-            x = Variable(torch.rand(1,*input_size)).type(dtype)
+        x = Variable(torch.rand(1,*input_size)).type(dtype)
             
             
         # print(type(x[0]))
@@ -63,6 +60,8 @@ def summary(model, input_size):
         line_new = '{:>20}  {:>25} {:>15}'.format('Layer (type)', 'Output Shape', 'Param #')
         print(line_new)
         print('================================================================')
+        line_new = '{:>20}  {:>25} {:>15}'.format('Input Tensor', str([-1,]+input_size), 'None')
+        print(line_new)
         total_params = 0
         trainable_params = 0
         for layer in summary:
@@ -79,3 +78,13 @@ def summary(model, input_size):
         print('Non-trainable params: ' + str(total_params - trainable_params))
         print('----------------------------------------------------------------')
         # return summary
+
+
+def summary(model, sizes):
+    if isinstance(sizes[0], (list, tuple)):
+        for idx, size in enumerate(sizes):
+            _summary(model, size)
+            if idx != len(sizes)-1:
+                print('*'*70 +'\n\n')
+    else:
+        _summary(model, sizes)
