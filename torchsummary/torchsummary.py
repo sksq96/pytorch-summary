@@ -41,9 +41,9 @@ def summary(model, input_size):
         
         # check if there are multiple inputs to the network
         if isinstance(input_size[0], (list, tuple)):
-            x = [Variable(torch.rand(1,*in_size)).type(dtype) for in_size in input_size]
+            x = [Variable(torch.rand(2,*in_size)).type(dtype) for in_size in input_size]
         else:
-            x = Variable(torch.rand(1,*input_size)).type(dtype)
+            x = Variable(torch.rand(2,*input_size)).type(dtype)
             
             
         # print(type(x[0]))
