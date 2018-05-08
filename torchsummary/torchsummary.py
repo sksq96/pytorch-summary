@@ -4,8 +4,23 @@ from torch.autograd import Variable
 
 from collections import OrderedDict
 
+batch_size = 2
+
 
 def summary(model, input_size):
+        def get_shape(output):
+            shape = []
+            if isinstance(output, (list, tuple)):
+                shape = [get_shape(o) for o in output]
+            else:
+                shape = list(output.size())
+
+                for i in range(len(shape)):
+                    if shape[i] == batch_size:
+                        shape[i] = -1
+                        return shape
+            return shape
+
         def register_hook(module):
             def hook(module, input, output):
                 class_name = str(module.__class__).split('.')[-1].split("'")[0]
@@ -15,18 +30,13 @@ def summary(model, input_size):
                 summary[m_key] = OrderedDict()
                 summary[m_key]['input_shape'] = list(input[0].size())
                 summary[m_key]['input_shape'][0] = -1
-                if isinstance(output, (list,tuple)):
-                    summary[m_key]['output_shape'] = [[-1] + list(o.size())[1:] for o in output]
-                else:
-                    summary[m_key]['output_shape'] = list(output.size())
-                    summary[m_key]['output_shape'][0] = -1
+                summary[m_key]['output_shape'] = get_shape(output)
 
                 params = 0
-                if hasattr(module, 'weight'):
-                    params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                    summary[m_key]['trainable'] = module.weight.requires_grad
-                if hasattr(module, 'bias') and hasattr(module.bias, 'size'):
-                    params +=  torch.prod(torch.LongTensor(list(module.bias.size())))
+
+                for name, param in module.named_parameters():
+                    params += torch.prod(torch.LongTensor(list(param.size())))
+                    summary[m_key]['trainable'] = param.requires_grad
                 summary[m_key]['nb_params'] = params
                 
             if (not isinstance(module, nn.Sequential) and 
@@ -41,9 +51,9 @@ def summary(model, input_size):
         
         # check if there are multiple inputs to the network
         if isinstance(input_size[0], (list, tuple)):
-            x = [Variable(torch.rand(1,*in_size)).type(dtype) for in_size in input_size]
+            x = [Variable(torch.rand(batch_size,*in_size)).type(dtype) for in_size in input_size]
         else:
-            x = Variable(torch.rand(1,*input_size)).type(dtype)
+            x = Variable(torch.rand(batch_size,*input_size)).type(dtype)
             
             
         # print(type(x[0]))
