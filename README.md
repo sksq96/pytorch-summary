@@ -5,8 +5,7 @@ Keras has a neat API to view the visualization of the model which is very helpfu
 
 ### Usage
 
-- `pip install torchsummary` or 
-- `git clone https://github.com/sksq96/pytorch-summary`
+- `git clone https://github.com/Coderx7/pytorch-summary`
 
 ```python
 from torchsummary import summary
