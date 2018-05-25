@@ -22,7 +22,7 @@ def summary(model, input_size):
                     summary[m_key]['output_shape'][0] = -1
 
                 params = 0
-                if hasattr(module, 'weight'):
+                if hasattr(module, 'weight') and hasattr(module.weight, 'size'):
                     params += torch.prod(torch.LongTensor(list(module.weight.size())))
                     summary[m_key]['trainable'] = module.weight.requires_grad
                 if hasattr(module, 'bias') and hasattr(module.bias, 'size'):
