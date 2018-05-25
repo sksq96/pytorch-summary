@@ -67,15 +67,15 @@ def summary(model, input_size):
         trainable_params = 0
         for layer in summary:
             # input_shape, output_shape, trainable, nb_params
-            line_new = '{:>20}  {:>25} {:>15}'.format(layer, str(summary[layer]['output_shape']), summary[layer]['nb_params'])
+            line_new = '{:>20}  {:>25} {:>15}'.format(layer, str(summary[layer]['output_shape']), '{0:,}'.format(summary[layer]['nb_params']))
             total_params += summary[layer]['nb_params']
             if 'trainable' in summary[layer]:
                 if summary[layer]['trainable'] == True:
                     trainable_params += summary[layer]['nb_params']
             print(line_new)
         print('================================================================')
-        print('Total params: ' + str(total_params))
-        print('Trainable params: ' + str(trainable_params))
-        print('Non-trainable params: ' + str(total_params - trainable_params))
+        print('Total params: {0:,}'.format(total_params))
+        print('Trainable params: {0:,}'.format(trainable_params))
+        print('Non-trainable params: {0:,}'.format(total_params - trainable_params))
         print('----------------------------------------------------------------')
         # return summary
