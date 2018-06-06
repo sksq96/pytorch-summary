@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 
 
-def summary(model, input_size):
+def summary(model, input_size, device="cuda"):
         def register_hook(module):
             def hook(module, input, output):
                 class_name = str(module.__class__).split('.')[-1].split("'")[0]
@@ -34,7 +34,10 @@ def summary(model, input_size):
                not (module == model)):
                 hooks.append(module.register_forward_hook(hook))
                 
-        if torch.cuda.is_available():
+        device = device.lower()
+        assert device in ["cuda", "cpu"], "Input device is not valid, please specify 'cuda' or 'cpu'"
+
+        if device is "cuda" and torch.cuda.is_available():
             dtype = torch.cuda.FloatTensor
         else:
             dtype = torch.FloatTensor
