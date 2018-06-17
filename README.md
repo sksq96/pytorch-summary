@@ -43,10 +43,8 @@ class Net(nn.Module):
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
 
-model = Net()
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
+model = Net().to(device)
 
 summary(model, (1, 28, 28))
 ```
@@ -76,10 +74,8 @@ import torch
 from torchvision import models
 from torchsummary import summary
 
-vgg = models.vgg16()
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model.to(device)
+vgg = models.vgg16().to(device)
 
 summary(vgg, (3, 224, 224))
 ```
