@@ -37,7 +37,7 @@ def summary(model, input_size, device="cuda"):
         device = device.lower()
         assert device in ["cuda", "cpu"], "Input device is not valid, please specify 'cuda' or 'cpu'"
 
-        if device is "cuda" and torch.cuda.is_available():
+        if device == "cuda" and torch.cuda.is_available():
             dtype = torch.cuda.FloatTensor
         else:
             dtype = torch.FloatTensor
