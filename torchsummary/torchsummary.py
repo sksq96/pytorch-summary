@@ -28,27 +28,21 @@ def summary(model, input_size, device="cuda"):
                 if hasattr(module, 'bias') and hasattr(module.bias, 'size'):
                     params +=  torch.prod(torch.LongTensor(list(module.bias.size())))
                 summary[m_key]['nb_params'] = params
-                
-            if (not isinstance(module, nn.Sequential) and 
-               not isinstance(module, nn.ModuleList) and 
+
+            if (not isinstance(module, nn.Sequential) and
+               not isinstance(module, nn.ModuleList) and
                not (module == model)):
                 hooks.append(module.register_forward_hook(hook))
-                
-        device = device.lower()
-        assert device in ["cuda", "cpu"], "Input device is not valid, please specify 'cuda' or 'cpu'"
 
-        if device == "cuda" and torch.cuda.is_available():
-            dtype = torch.cuda.FloatTensor
-        else:
-            dtype = torch.FloatTensor
-        
+        dtype = torch.FloatTensor if device == "cpu" else torch.cuda.FloatTensor
+
         # check if there are multiple inputs to the network
         if isinstance(input_size[0], (list, tuple)):
             x = [Variable(torch.rand(2,*in_size)).type(dtype) for in_size in input_size]
         else:
             x = Variable(torch.rand(2,*input_size)).type(dtype)
-            
-            
+
+
         # print(type(x[0]))
         # create properties
         summary = OrderedDict()
