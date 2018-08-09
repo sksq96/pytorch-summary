@@ -5,7 +5,7 @@ from torch.autograd import Variable
 from collections import OrderedDict
 import numpy as np
 
-def summary(model, input_size, batch_size=-1,device="cuda"):
+def summary(model, input_size, batch_size=-1, device="cuda"):
         def register_hook(module):
             def hook(module, input, output):
                 class_name = str(module.__class__).split('.')[-1].split("'")[0]
@@ -78,9 +78,10 @@ def summary(model, input_size, batch_size=-1,device="cuda"):
                 if summary[layer]['trainable'] == True:
                     trainable_params += summary[layer]['nb_params']
             print(line_new)
-        #assume 4 bytes/number (float on cuda). 
+        
+        # assume 4 bytes/number (float on cuda). 
         total_input_size = abs(np.prod(input_size)*batch_size*4./(1024**2.))
-        total_output_size = abs(2.*total_output*4./(1024**2.)) #x2 for gradients
+        total_output_size = abs(2.*total_output*4./(1024**2.)) # x2 for gradients
         total_params_size = abs(total_params.numpy()*4./(1024**2.))
         total_size = total_params_size + total_output_size + total_input_size
 
@@ -94,4 +95,4 @@ def summary(model, input_size, batch_size=-1,device="cuda"):
         print('Params size (MB): %0.2f' % total_params_size)
         print('Estimated Total Size (MB): %0.2f' % total_size)
         print('----------------------------------------------------------------')
-        #return summary
+        # return summary

@@ -63,6 +63,11 @@ Total params: 21,840
 Trainable params: 21,840
 Non-trainable params: 0
 ----------------------------------------------------------------
+Input size (MB): 0.00
+Forward/backward pass size (MB): 0.06
+Params size (MB): 0.08
+Estimated Total Size (MB): 0.15
+----------------------------------------------------------------
 ```
 
 
@@ -129,6 +134,11 @@ Total params: 138,357,544
 Trainable params: 138,357,544
 Non-trainable params: 0
 ----------------------------------------------------------------
+Input size (MB): 0.57
+Forward/backward pass size (MB): 218.59
+Params size (MB): 527.79
+Estimated Total Size (MB): 746.96
+----------------------------------------------------------------
 ```
 
 
@@ -136,3 +146,4 @@ Non-trainable params: 0
 
 - The code is borrowed from [this PyTorch issue](https://github.com/pytorch/pytorch/issues/2001).
 - Thanks to @ncullen93 and @HTLife. 
+- For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))
