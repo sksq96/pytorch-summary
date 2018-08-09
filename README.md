@@ -144,6 +144,6 @@ Estimated Total Size (MB): 746.96
 
 ### References
 
-- The code is borrowed from [this PyTorch issue](https://github.com/pytorch/pytorch/issues/2001).
+- The idea for this package sparked from [this PyTorch issue](https://github.com/pytorch/pytorch/issues/2001).
 - Thanks to @ncullen93 and @HTLife. 
 - For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))
