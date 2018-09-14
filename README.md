@@ -19,6 +19,7 @@ summary(your_model, input_size=(channels, H, W))
 
 #### CNN for MNSIT
 
+
 ```python
 import torch
 import torch.nn as nn
@@ -48,6 +49,7 @@ model = Net().to(device)
 
 summary(model, (1, 28, 28))
 ```
+
 
 ```
 ----------------------------------------------------------------
@@ -84,7 +86,6 @@ vgg = models.vgg16().to(device)
 
 summary(vgg, (3, 224, 224))
 ```
-
 
 
 ```
@@ -140,6 +141,56 @@ Params size (MB): 527.79
 Estimated Total Size (MB): 746.96
 ----------------------------------------------------------------
 ```
+
+
+#### Multiple Inputs
+
+
+```python
+import torch
+import torch.nn as nn
+from torchsummary import summary
+
+class SimpleConv(nn.Module):
+    def __init__(self):
+        super(SimpleConv, self).__init__()
+        self.features = nn.Sequential(
+            nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(),
+        )
+
+    def forward(self, x, y):
+        x1 = self.features(x)
+        x2 = self.features(y)
+        return x1, x2
+    
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = SimpleConv().to(device)
+
+summary(model, (1, 16, 16), (1, 28, 28))
+```
+
+
+```
+----------------------------------------------------------------
+        Layer (type)               Output Shape         Param #
+================================================================
+            Conv2d-1            [-1, 1, 16, 16]              10
+              ReLU-2            [-1, 1, 16, 16]               0
+            Conv2d-3            [-1, 1, 28, 28]              10
+              ReLU-4            [-1, 1, 28, 28]               0
+================================================================
+Total params: 20
+Trainable params: 20
+Non-trainable params: 0
+----------------------------------------------------------------
+Input size (MB): 0.77
+Forward/backward pass size (MB): 0.02
+Params size (MB): 0.00
+Estimated Total Size (MB): 0.78
+----------------------------------------------------------------
+```
+
 
 
 ### References

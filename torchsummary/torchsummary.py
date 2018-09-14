@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device="cuda"):
+def summary(model, *input_size, batch_size=-1, device="cuda"):
 
     def register_hook(module):
 
@@ -52,13 +52,10 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
     else:
         dtype = torch.FloatTensor
 
-    # check if there are multiple inputs to the network
-    if isinstance(input_size[0], (list, tuple)):
-        x = [Variable(torch.rand(2, *in_size)).type(dtype) for in_size in input_size]
-    else:
-        x = Variable(torch.rand(2, *input_size)).type(dtype)
-
+    # multiple inputs to the network
+    x = [torch.rand(2, *in_size).type(dtype) for in_size in input_size]
     # print(type(x[0]))
+
     # create properties
     summary = OrderedDict()
     hooks = []
@@ -68,7 +65,7 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
 
     # make a forward pass
     # print(x.shape)
-    model(x)
+    model(*x)
 
     # remove these hooks
     for h in hooks:
