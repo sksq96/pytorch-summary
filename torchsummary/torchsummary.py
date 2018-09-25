@@ -41,19 +41,11 @@ def summary(model, *input_size, batch_size=-1, device="cuda"):
         ):
             hooks.append(module.register_forward_hook(hook))
 
-    device = device.lower()
-    assert device in [
-        "cuda",
-        "cpu",
-    ], "Input device is not valid, please specify 'cuda' or 'cpu'"
-
-    if device == "cuda" and torch.cuda.is_available():
-        dtype = torch.cuda.FloatTensor
-    else:
-        dtype = torch.FloatTensor
+    if isinstance(device, str):
+       device = torch.device(device.lower())
 
     # multiple inputs to the network
-    x = [torch.rand(2, *in_size).type(dtype) for in_size in input_size]
+    x = [torch.rand(2, *in_size).to(device) for in_size in input_size]
     # print(type(x[0]))
 
     # create properties
