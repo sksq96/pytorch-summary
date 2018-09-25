@@ -47,7 +47,7 @@ class Net(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
 model = Net().to(device)
 
-summary(model, (1, 28, 28))
+summary(model, (1, 28, 28), device=device)
 ```
 
 
