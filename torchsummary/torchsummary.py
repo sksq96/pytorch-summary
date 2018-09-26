@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, *input_size, batch_size=-1, device="cuda"):
+def summary(model, input_size, batch_size=-1, device="cuda"):
 
     def register_hook(module):
 
@@ -53,6 +53,10 @@ def summary(model, *input_size, batch_size=-1, device="cuda"):
         dtype = torch.FloatTensor
 
     # multiple inputs to the network
+    if isinstance(input_size, tuple):
+        input_size = [input_size]
+
+    # batch_size of 2 for batchnorm
     x = [torch.rand(2, *in_size).type(dtype) for in_size in input_size]
     # print(type(x[0]))
 
