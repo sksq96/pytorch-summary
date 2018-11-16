@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device="cuda"):
+def summary(model, input_size, batch_size=-1, device="cuda", start_index=1):
 
     def register_hook(module):
 
@@ -14,7 +14,7 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
 
-            m_key = "%s-%i" % (class_name, module_idx + 1)
+            m_key = "%s-%i" % (class_name, module_idx + start_index)
             summary[m_key] = OrderedDict()
             summary[m_key]["input_shape"] = list(input[0].size())
             summary[m_key]["input_shape"][0] = batch_size
