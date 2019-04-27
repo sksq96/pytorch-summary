@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device="cuda"):
+def summary(model, input_size, batch_size=-1, device="cpu"):
 
     def register_hook(module):
 
@@ -41,23 +41,26 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
         ):
             hooks.append(module.register_forward_hook(hook))
 
-    device = device.lower()
-    assert device in [
-        "cuda",
-        "cpu",
-    ], "Input device is not valid, please specify 'cuda' or 'cpu'"
+    if isinstance(device, str):
+        device = device.lower()
+        assert device in [
+            "cuda",
+            "cuda:0",
+            "cuda:1",
+            "cpu",
+        ], "Input device is not valid, please specify 'cuda' or 'cpu'"
 
-    if device == "cuda" and torch.cuda.is_available():
-        dtype = torch.cuda.FloatTensor
-    else:
-        dtype = torch.FloatTensor
+    # if device == "cuda" and torch.cuda.is_available():
+    #     dtype = torch.cuda.FloatTensor
+    # else:
+    #     dtype = torch.FloatTensor
 
     # multiple inputs to the network
     if isinstance(input_size, tuple):
         input_size = [input_size]
 
     # batch_size of 2 for batchnorm
-    x = [torch.rand(2, *in_size).type(dtype) for in_size in input_size]
+    x = [torch.rand(2, *in_size).to(device) for in_size in input_size]
     # print(type(x[0]))
 
     # create properties
