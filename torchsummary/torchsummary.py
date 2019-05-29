@@ -47,10 +47,13 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
         "cpu",
     ], "Input device is not valid, please specify 'cuda' or 'cpu'"
 
-    if device == "cuda" and torch.cuda.is_available():
-        dtype = torch.cuda.FloatTensor
-    else:
-        dtype = torch.FloatTensor
+    # Get the data type of model parameters
+    dtype = list(model.parameters())[0].type()
+
+    if (device == "cuda" and torch.cuda.is_available()) and ("cuda" not in dtype):       
+        model.cuda()   
+        index = dtype.find('.')
+        dtype = dtype[:index]+'.cuda'+dtype[index:]
 
     # multiple inputs to the network
     if isinstance(input_size, tuple):
@@ -96,10 +99,12 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
                 trainable_params += summary[layer]["nb_params"]
         print(line_new)
 
-    # assume 4 bytes/number (float on cuda).
-    total_input_size = abs(np.prod(input_size) * batch_size * 4. / (1024 ** 2.))
-    total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
-    total_params_size = abs(total_params.numpy() * 4. / (1024 ** 2.))
+    # Get the bytes occupied for each number
+    bytes_per_number = float(x[0].element_size())
+
+    total_input_size = abs(np.prod(input_size) * batch_size * bytes_per_number / (1024 ** 2.))
+    total_output_size = abs(2. * total_output * bytes_per_number / (1024 ** 2.))  # x2 for gradients
+    total_params_size = abs(total_params.numpy() * bytes_per_number / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
 
     print("================================================================")
