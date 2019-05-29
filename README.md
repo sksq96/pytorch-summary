@@ -1,12 +1,11 @@
-## Keras style `model.summary()` in PyTorch
-[![PyPI version](https://badge.fury.io/py/torchsummary.svg)](https://badge.fury.io/py/torchsummary)
+## Improvised version for Keras style `model.summary()` in PyTorch
 
 Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. Here is a barebone code to try and mimic the same in PyTorch. The aim is to provide information complementary to, what is not provided by `print(your_model)` in PyTorch.
 
-### Usage
+This version of Summary supports all datatypes of network whereas its original version supported only for 'torch.FloatTensor'. Here, automatic conversion to cuda is done and you might/mighnot convert your network to CUDA.
 
-- `pip install torchsummary` or 
-- `git clone https://github.com/sksq96/pytorch-summary`
+### Usage
+- `git clone https://github.com/Harikr16/pytorch-summary`
 
 ```python
 from torchsummary import summary
@@ -17,7 +16,7 @@ summary(your_model, input_size=(channels, H, W))
 
 ### Examples
 
-#### CNN for MNSIT
+#### CNN for MNIST
 
 
 ```python
@@ -43,9 +42,6 @@ class Net(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") # PyTorch v0.4.0
-model = Net().to(device)
 
 summary(model, (1, 28, 28))
 ```
@@ -80,9 +76,6 @@ Estimated Total Size (MB): 0.15
 import torch
 from torchvision import models
 from torchsummary import summary
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-vgg = models.vgg16().to(device)
 
 summary(vgg, (3, 224, 224))
 ```
@@ -163,9 +156,6 @@ class SimpleConv(nn.Module):
         x1 = self.features(x)
         x2 = self.features(y)
         return x1, x2
-    
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = SimpleConv().to(device)
 
 summary(model, [(1, 16, 16), (1, 28, 28)])
 ```
@@ -194,7 +184,6 @@ Estimated Total Size (MB): 0.78
 
 
 ### References
+- Based on the original version from https://github.com/sksq96/pytorch-summary
 
-- The idea for this package sparked from [this PyTorch issue](https://github.com/pytorch/pytorch/issues/2001).
-- Thanks to @ncullen93 and @HTLife. 
-- For Model Size Estimation @jacobkimmel ([details here](https://github.com/sksq96/pytorch-summary/pull/21))
+# Open to pull requests
