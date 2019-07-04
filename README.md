@@ -1,7 +1,7 @@
 ## Keras style `model.summary()` in PyTorch
 [![PyPI version](https://badge.fury.io/py/torchsummary.svg)](https://badge.fury.io/py/torchsummary)
 
-Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. Here is a barebone code to try and mimic the same in PyTorch. The aim is to provide information complementary to, what is not provided by `print(your_model)` in PyTorch.
+Keras has a neat API to view the visualization of the model which is very helpful while debugging your network. Here is a barebone code to try and mimic the same in PyTorch. The aim is to provide information complementary to, what is not provided by `print(your_model)` in PyTorch. (**New functionality**) The main function `summary` (`from torchsummary import summary`) can also be used to infer the output shape of a pytorch model. Thus, it provides a way to build pytorch model that supports any input shape like in Keras (see an [example](#scalable) below).
 
 ### Usage
 
@@ -191,6 +191,100 @@ Estimated Total Size (MB): 0.78
 ----------------------------------------------------------------
 ```
 
+### Build pytorch model with scalable input shape (like Keras)<a name="scalable"></a>
+
+```python
+
+import torch
+import torch.nn as nn
+from torchsummary import summary
+
+class AutoEncoder(nn.Module):
+    """
+    ResNet autoencoder network that support any input shape as model in Keras
+    :param img_shape (tuple, channel last): support any image input shape 
+    :param state_dim: (int) latent state dimension
+    """
+
+    def __init__(self, img_shape=(3, 224, 224), state_dim=3):
+        super().__init__()
+        self.state_dim = state_dim
+        self.img_shape = img_shape
+
+        self.encoder_conv = nn.Sequential(
+            nn.Conv2d(self.img_shape[0], 64, kernel_size=7, stride=2, padding=3, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2),
+
+            nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1, bias=False),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=3, stride=2)
+        )
+        ## Without torchsummary here, it's impossible to build model with scalable input shape as Keras.
+        outshape = summary(self.encoder_conv, img_shape, show=False)  # [-1, channels, high, width]
+        self.img_height, self.img_width = outshape[-2:]
+        self.encoder_fc = nn.Sequential(
+            nn.Linear(self.img_height * self.img_width * 64, state_dim)
+        )
+
+        self.decoder_fc = nn.Sequential(
+            nn.Linear(state_dim, self.img_height * self.img_width * 64)
+        )
+
+        self.decoder_conv = nn.Sequential(
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(64, 64, kernel_size=3, stride=2),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+
+            nn.ConvTranspose2d(64, self.img_shape[0], kernel_size=4, stride=2),
+            nn.Tanh()
+        )
+
+    def encode(self, x):
+        """
+        Encode image to latent state
+        """
+        encoded = self.encoder_conv(x)
+        encoded = encoded.view(encoded.size(0), -1)
+        return self.encoder_fc(encoded)
+
+    def decode(self, x):
+        """
+        Decode latent state to image
+        """
+        decoded = self.decoder_fc(x)
+        decoded = decoded.view(x.size(0), 64, self.img_height, self.img_width)
+        return self.decoder_conv(decoded)
+
+    def forward(self, x):
+        reconstruct = self.decode(self.encode(x))
+        return reconstruct
+
+
+img_shape = (3,128,128)
+model = AutoEncoder(img_shape=img_shape, state_dim=100)
+summary(model, img_shape)
+
+```
 
 
 ### References

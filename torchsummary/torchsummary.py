@@ -40,20 +40,25 @@ def summary(model, input_size, batch_size=-1, device="cpu", show=True):
             and not (module == model)
         ):
             hooks.append(module.register_forward_hook(hook))
-
+    def cuda_device_valid(device_str):
+        valid = device_str.startswith("cuda")
+        try:
+            device_index = int(device_str.split(":")[-1])
+            total_gpu_num = torch.cuda.device_count()
+            if (device_index < total_gpu_num):
+                return valid
+            else:
+                print("Cuda device '{}' dosen't exist. Find {} GPU(s)".format(device_str, total_gpu_num))
+                return False
+        except:
+            print("CUDA device should have form like 'cuda:0', 'cuda:n', etc. (n is an integer)")
+            return False
     if isinstance(device, str):
         device = device.lower()
         assert device in [
             "cuda",
-            "cuda:0",
-            "cuda:1",
             "cpu",
-        ], "Input device is not valid, please specify 'cuda' or 'cpu'"
-
-    # if device == "cuda" and torch.cuda.is_available():
-    #     dtype = torch.cuda.FloatTensor
-    # else:
-    #     dtype = torch.FloatTensor
+        ] or cuda_device_valid(device), "Input device is not valid, please specify 'cpu' or 'cuda' or 'cuda:n'"
 
     # multiple inputs to the network
     if isinstance(input_size, tuple):
