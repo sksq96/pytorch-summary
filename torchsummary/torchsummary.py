@@ -22,7 +22,7 @@ def output(summary, keys, left, right, output_depth, depth=1):
             new_line = "{:<40} {:<25} {:<15}".format(
                 start,
                 str(summary[layer]["output_shape"]),
-                "{0:,}".format(summary[layer]["nb_params"])
+                "--" if summary[layer]["nb_params"] == 0 else "{0:,}".format(summary[layer]["nb_params"])
             )
             print(new_line)
 
