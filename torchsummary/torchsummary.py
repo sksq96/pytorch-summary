@@ -5,7 +5,10 @@ from torch.autograd import Variable
 from collections import OrderedDict
 import numpy as np
 
-def output(summary, keys, left, right, depth=1):
+def output(summary, keys, left, right, output_depth, depth=1):
+    if depth > output_depth:
+        return
+
     nl = left - 1
 
     for i in range(left, right):
@@ -23,7 +26,7 @@ def output(summary, keys, left, right, depth=1):
             )
             print(new_line)
 
-            output(summary, keys, nl+1, i, depth+1)
+            output(summary, keys, nl+1, i, output_depth, depth+1)
             nl = i
 
 def apply(model, fn, depth=0):
@@ -99,11 +102,11 @@ def summary_depth(model, input_size, batch_size=-1, device="cuda", output_depth=
         h.remove()
     
     keys = list(summary.keys())
-    print("----------------------------------------------------------------------------")
+    print("-" * 90)
     line_new = "{:<40} {:<25} {:<15}".format("Layer (type:depth-idx)", "Output Shape", "Param #")
     print(line_new)
-    print("============================================================================")
-    output(summary, keys, 0, len(keys))
+    print("=" * 90)
+    output(summary, keys, 0, len(keys), output_depth)
 
     total_params = 0
     total_output = 0
@@ -119,14 +122,14 @@ def summary_depth(model, input_size, batch_size=-1, device="cuda", output_depth=
     total_input_size = abs(np.prod(input_size) * batch_size * 4. / (1024 ** 2.))
     total_params_size = abs(total_params.numpy() * 4. / (1024 ** 2.))
 
-    print("============================================================================")
+    print("=" * 90)
     print("Total params: {0:,}".format(total_params))
     print("Trainable params: {0:,}".format(trainable_params))
     print("Non-trainable params: {0:,}".format(total_params - trainable_params))
-    print("----------------------------------------------------------------------------")
+    print("-" * 90)
     print("Input size (MB): %0.2f" % total_input_size)
     print("Params size (MB): %0.2f" % total_params_size)
-    print("----------------------------------------------------------------------------")
+    print("-" * 90)
     # return summary
     
 
