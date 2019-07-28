@@ -17,7 +17,7 @@ summary(your_model, input_size=(channels, H, W))
 
 ### Examples
 
-#### CNN for MNSIT
+#### CNN for MNIST
 
 
 ```python
