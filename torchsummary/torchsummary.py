@@ -32,9 +32,9 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
                 summary[m_key]["trainable"] = module.weight.requires_grad
             if hasattr(module, "bias") and hasattr(module.bias, "size"):
                 params += torch.prod(torch.LongTensor(list(module.bias.size())))
-            if hasattr(module, "running_mean") and hasattr(module.running_mean, "size"):
+            if hasattr(module, "running_mean") and hasattr(module.running_mean, "size") and hasattr(module, "track_running_stats") and module.track_running_stats:
                 params += torch.prod(torch.LongTensor(list(module.running_mean.size())))
-            if hasattr(module, "running_var") and hasattr(module.running_var, "size"):
+            if hasattr(module, "running_var") and hasattr(module.running_var, "size") and hasattr(module, "track_running_stats") and module.track_running_stats:
                 params += torch.prod(torch.LongTensor(list(module.running_var.size())))                
             summary[m_key]["nb_params"] = params
 
