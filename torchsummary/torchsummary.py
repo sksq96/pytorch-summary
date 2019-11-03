@@ -7,11 +7,20 @@ import numpy as np
 
 
 def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
+    result, params_info = summary_string(
+        model, input_size, batch_size, device, dtypes)
+    print(result)
+
+    return params_info
+
+
+def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
     if dtypes == None:
         dtypes = [torch.FloatTensor]*len(input_size)
 
-    def register_hook(module):
+    summary_str = ''
 
+    def register_hook(module):
         def hook(module, input, output):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
@@ -46,9 +55,9 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
     if isinstance(input_size, tuple):
         input_size = [input_size]
 
-
     # batch_size of 2 for batchnorm
-    x = [ torch.rand(2, *in_size).type(dtype).to(device=device) for in_size, dtype in zip(input_size, dtypes)]
+    x = [torch.rand(2, *in_size).type(dtype).to(device=device)
+         for in_size, dtype in zip(input_size, dtypes)]
 
     # create properties
     summary = OrderedDict()
@@ -65,10 +74,11 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
     for h in hooks:
         h.remove()
 
-    print("----------------------------------------------------------------")
-    line_new = "{:>20}  {:>25} {:>15}".format("Layer (type)", "Output Shape", "Param #")
-    print(line_new)
-    print("================================================================")
+    summary_str += "----------------------------------------------------------------" + "\n"
+    line_new = "{:>20}  {:>25} {:>15}".format(
+        "Layer (type)", "Output Shape", "Param #")
+    summary_str += line_new + "\n"
+    summary_str += "================================================================" + "\n"
     total_params = 0
     total_output = 0
     trainable_params = 0
@@ -85,23 +95,26 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]
-        print(line_new)
+        summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
-    total_input_size = abs(np.prod(sum(input_size, ())) * batch_size * 4. / (1024 ** 2.))
-    total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
+    total_input_size = abs(np.prod(sum(input_size, ()))
+                           * batch_size * 4. / (1024 ** 2.))
+    total_output_size = abs(2. * total_output * 4. /
+                            (1024 ** 2.))  # x2 for gradients
     total_params_size = abs(total_params * 4. / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
 
-    print("================================================================")
-    print("Total params: {0:,}".format(total_params))
-    print("Trainable params: {0:,}".format(trainable_params))
-    print("Non-trainable params: {0:,}".format(total_params - trainable_params))
-    print("----------------------------------------------------------------")
-    print("Input size (MB): %0.2f" % total_input_size)
-    print("Forward/backward pass size (MB): %0.2f" % total_output_size)
-    print("Params size (MB): %0.2f" % total_params_size)
-    print("Estimated Total Size (MB): %0.2f" % total_size)
-    print("----------------------------------------------------------------")
+    summary_str += "================================================================" + "\n"
+    summary_str += "Total params: {0:,}".format(total_params) + "\n"
+    summary_str += "Trainable params: {0:,}".format(trainable_params) + "\n"
+    summary_str += "Non-trainable params: {0:,}".format(total_params -
+                                                        trainable_params) + "\n"
+    summary_str += "----------------------------------------------------------------" + "\n"
+    summary_str += "Input size (MB): %0.2f" % total_input_size + "\n"
+    summary_str += "Forward/backward pass size (MB): %0.2f" % total_output_size + "\n"
+    summary_str += "Params size (MB): %0.2f" % total_params_size + "\n"
+    summary_str += "Estimated Total Size (MB): %0.2f" % total_size + "\n"
+    summary_str += "----------------------------------------------------------------" + "\n"
     # return summary
-    return total_params, trainable_params
+    return summary_str, (total_params, trainable_params)
