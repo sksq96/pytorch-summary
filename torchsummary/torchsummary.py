@@ -22,6 +22,17 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
                 summary[m_key]["output_shape"] = [
                     [-1] + list(o.size())[1:] for o in output
                 ]
+            '''
+            Adding check for dictionaries in the output. Dictionary are faster
+            for lookup and makes for more readable code.
+            '''
+            if isinstance(output, (dict)):
+                summary[m_key]["output_shape" ] = [
+                    [-1] + list(output[key].size())[1:] for key in
+                    output.keys()
+                ]
+                print(summary[m_key]["output_shape"])
+
             else:
                 summary[m_key]["output_shape"] = list(output.size())
                 summary[m_key]["output_shape"][0] = batch_size
