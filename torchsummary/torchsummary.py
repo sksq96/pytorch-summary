@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device="cuda"):
+def summary(model, input_size, batch_size=-1, device="cuda", force_dtype=None):
 
     def register_hook(module):
 
@@ -51,6 +51,8 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
         dtype = torch.cuda.FloatTensor
     else:
         dtype = torch.FloatTensor
+    if force_dtype:
+        dtype = force_dtype
 
     # multiple inputs to the network
     if isinstance(input_size, tuple):
