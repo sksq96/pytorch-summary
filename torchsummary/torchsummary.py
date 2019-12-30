@@ -37,7 +37,6 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
         if (
             not isinstance(module, nn.Sequential)
             and not isinstance(module, nn.ModuleList)
-            and not (module == model)
         ):
             hooks.append(module.register_forward_hook(hook))
 
@@ -90,6 +89,7 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
             "{0:,}".format(summary[layer]["nb_params"]),
         )
         total_params += summary[layer]["nb_params"]
+
         total_output += np.prod(summary[layer]["output_shape"])
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
@@ -99,7 +99,7 @@ def summary(model, input_size, batch_size=-1, device="cuda"):
     # assume 4 bytes/number (float on cuda).
     total_input_size = abs(np.prod(sum(input_size, ())) * batch_size * 4. / (1024 ** 2.))
     total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
-    total_params_size = abs(total_params.numpy() * 4. / (1024 ** 2.))
+    total_params_size = abs(total_params * 4. / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
 
     print("================================================================")
