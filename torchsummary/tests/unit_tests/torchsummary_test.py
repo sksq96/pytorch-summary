@@ -1,6 +1,6 @@
 import unittest
 from torchsummary import summary
-from torchsummary.tests.test_models.test_model import SingleInputNet, MultipleInputNet
+from torchsummary.tests.test_models.test_model import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes
 import torch
 
 class torchsummaryTests(unittest.TestCase):
@@ -30,9 +30,18 @@ class torchsummaryTests(unittest.TestCase):
         model = torch.nn.Linear(2, 5)
         model.cuda()
         input = (1, 2)
-        total_params, trainable_params = summary(model, input, device="cuda")
+        total_params, trainable_params = summary(model, input, device="cuda:0")
         self.assertEqual(total_params, 15)
         self.assertEqual(trainable_params, 15)
+
+    def test_multiple_input_types(self):
+        model = MultipleInputNetDifferentDtypes()
+        input1 = (1, 300)
+        input2 = (1, 300)
+        dtypes = [torch.FloatTensor, torch.LongTensor]
+        total_params, trainable_params = summary(model, [input1, input2], device="cpu", dtypes=dtypes)
+        self.assertEqual(total_params, 31120)
+        self.assertEqual(trainable_params, 31120)
 
 if __name__ == '__main__':
     unittest.main(buffer=True)
