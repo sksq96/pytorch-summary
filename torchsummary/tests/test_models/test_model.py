@@ -35,3 +35,22 @@ class MultipleInputNet(nn.Module):
         x2 = self.fc2b(x2)
         x = torch.cat((x1, x2), 0)
         return F.log_softmax(x, dim=1)
+
+class MultipleInputNetDifferentDtypes(nn.Module):
+    def __init__(self):
+        super(MultipleInputNetDifferentDtypes, self).__init__()
+        self.fc1a = nn.Linear(300, 50)
+        self.fc1b = nn.Linear(50, 10)
+
+        self.fc2a = nn.Linear(300, 50)
+        self.fc2b = nn.Linear(50, 10)
+
+    def forward(self, x1, x2):
+        x1 = F.relu(self.fc1a(x1))
+        x1 = self.fc1b(x1)
+        x2 = x2.type(torch.FloatTensor)
+        x2 = F.relu(self.fc2a(x2))
+        x2 = self.fc2b(x2)
+        # set x2 to FloatTensor
+        x = torch.cat((x1, x2), 0)
+        return F.log_softmax(x, dim=1)
