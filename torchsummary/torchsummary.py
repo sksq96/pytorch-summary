@@ -52,6 +52,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         if (
             not isinstance(module, nn.Sequential)
             and not isinstance(module, nn.ModuleList)
+            and not(module==model)
         ):
             hooks.append(module.register_forward_hook(hook))
 
