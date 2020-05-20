@@ -6,7 +6,7 @@ from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
+def summary(model, input_size, batch_size=-1, device=None, dtypes=None):
     result, params_info = summary_string(
         model, input_size, batch_size, device, dtypes)
     print(result)
@@ -14,9 +14,12 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
     return params_info
 
 
-def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
-    if dtypes == None:
+def summary_string(model, input_size, batch_size=-1, device=None, dtypes=None):
+    if dtypes is None:
         dtypes = [torch.FloatTensor]*len(input_size)
+        
+    if device is None:
+        device = str(next(model.parameters()).device)
 
     summary_str = ''
 
