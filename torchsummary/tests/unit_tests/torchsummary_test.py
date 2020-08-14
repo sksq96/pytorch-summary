@@ -1,11 +1,14 @@
 import unittest
 from torchsummary import summary, summary_string
-from torchsummary.tests.test_models.test_model import SingleInputNet, MultipleInputNet, MultipleInputNetDifferentDtypes
+from torchsummary.torchsummary import _build_summary_dict, _build_summary_string
+from torchsummary.tests.test_models.test_model import SingleInputNet, MultipleInputNet, \
+    MultipleInputNetDifferentDtypes, NestedNet, CustomModule
 import torch
 
 gpu_if_available = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-class torchsummaryTests(unittest.TestCase):
+
+class TorchSummaryTests(unittest.TestCase):
     def test_single_input(self):
         model = SingleInputNet()
         input = (1, 28, 28)
@@ -48,8 +51,34 @@ class torchsummaryTests(unittest.TestCase):
         self.assertEqual(total_params, 31120)
         self.assertEqual(trainable_params, 31120)
 
+    def test_recursive(self):
+        model = NestedNet()
+        input = (1, 28, 28)
+        summary = _build_summary_dict(model, [input], device='cpu')
+        summary_str, (total_params, trainable_params) = _build_summary_string(summary, [input])
 
-class torchsummarystringTests(unittest.TestCase):
+        self.assertListEqual(list(summary.keys()), ['Conv2d-1', 'BatchNorm2d-2', 'MaxPool2d-3', 'ConvBlock-4',
+                                                    'Conv2d-5', 'BatchNorm2d-6', 'MaxPool2d-7', 'ConvBlock-8',
+                                                    'Dropout2d-9', 'Linear-10', 'Linear-11', 'NestedNet-12'])
+        self.assertEqual(total_params, 21900)
+        self.assertEqual(trainable_params, 21900)
+
+        summary = _build_summary_dict(model, [input], device='cpu', recurse=False)
+        summary_str, (total_params, trainable_params) = _build_summary_string(summary, [input])
+        self.assertListEqual(list(summary.keys()), ['ConvBlock-1', 'ConvBlock-2', 'Dropout2d-3', 'Linear-4',
+                                                    'Linear-5', 'NestedNet-6'])
+        self.assertEqual(total_params, 21900)
+        self.assertEqual(trainable_params, 21900)
+
+    def test_custom_module(self):
+        model = CustomModule()
+        input = (1, 50)
+        total_params, trainable_params = summary(model, input, device='cpu')
+        self.assertEqual(total_params, 2500)
+        self.assertEqual(trainable_params, 2500)
+
+
+class TorchSummaryStringTests(unittest.TestCase):
     def test_single_input(self):
         model = SingleInputNet()
         input = (1, 28, 28)

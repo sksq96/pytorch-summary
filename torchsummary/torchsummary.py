@@ -1,24 +1,30 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
-    result, params_info = summary_string(
-        model, input_size, batch_size, device, dtypes)
+def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
+    result, params_info = summary_string(model, input_size, batch_size, device, dtypes, recurse)
     print(result)
 
     return params_info
 
 
-def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
+def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
+    # multiple inputs to the network
+    if isinstance(input_size, tuple):
+        input_size = [input_size]
+
+    summary = _build_summary_dict(
+        model, input_size, batch_size, device, dtypes, recurse)
+    return _build_summary_string(summary, input_size, batch_size)
+
+
+def _build_summary_dict(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
     if dtypes == None:
         dtypes = [torch.FloatTensor]*len(input_size)
-
-    summary_str = ''
 
     def register_hook(module):
         def hook(module, input, output):
@@ -52,10 +58,6 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         ):
             hooks.append(module.register_forward_hook(hook))
 
-    # multiple inputs to the network
-    if isinstance(input_size, tuple):
-        input_size = [input_size]
-
     # batch_size of 2 for batchnorm
     x = [torch.rand(2, *in_size).type(dtype).to(device=device)
          for in_size, dtype in zip(input_size, dtypes)]
@@ -65,7 +67,11 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     hooks = []
 
     # register hook
-    model.apply(register_hook)
+    if recurse:
+        model.apply(register_hook)
+    else:
+        [register_hook(m) for m in model.children()]
+        register_hook(model)
 
     # make a forward pass
     # print(x.shape)
@@ -75,6 +81,12 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     for h in hooks:
         h.remove()
 
+    return summary
+
+
+def _build_summary_string(summary, input_size, batch_size=-1):
+
+    summary_str = ''
     summary_str += "----------------------------------------------------------------" + "\n"
     line_new = "{:>20}  {:>25} {:>15}".format(
         "Layer (type)", "Output Shape", "Param #")
