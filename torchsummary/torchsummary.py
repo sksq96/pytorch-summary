@@ -3,8 +3,8 @@ import torch.nn as nn
 from torch.autograd import Variable
 
 from collections import OrderedDict
+from numbers import Number
 import numpy as np
-
 
 def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
     result, params_info = summary_string(
@@ -12,6 +12,39 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
     print(result)
 
     return params_info
+
+def _extract_shapes(output, batch_size=-1):
+    if isinstance(output, (list, tuple)):
+        result = []
+        for o in output:
+            result.append(_extract_shapes(o))
+        return result
+    else:
+        output_shape = list(output.size())
+        output_shape[0] = batch_size
+        return output_shape
+
+def _normalize_depth(lst):
+    if isinstance(lst[0], Number):
+        # Assume this is a flat list already
+        return lst
+    else:
+        result = []
+        for element in lst:
+            result.extend(_normalize_depth(element))
+        return result
+
+def _overflow_sizes(summary):
+    kStartLength = 20
+    kMidLength = 25
+    kEndLength = 15
+    kSpaces = 2
+    for layer in summary:
+        kStartLength = max(kStartLength, len(str(layer)))
+        kMidLength = max(kMidLength, len(str(summary[layer]["output_shape"])))
+        kEndLength = max(kEndLength, len(str(summary[layer]["nb_params"])))
+    total_length = kStartLength + kMidLength + kEndLength + kSpaces
+    return kStartLength, kMidLength, kEndLength, total_length
 
 
 def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
@@ -29,20 +62,13 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key] = OrderedDict()
             summary[m_key]["input_shape"] = list(input[0].size())
             summary[m_key]["input_shape"][0] = batch_size
-            if isinstance(output, (list, tuple)):
-                summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
-                ]
-            else:
-                summary[m_key]["output_shape"] = list(output.size())
-                summary[m_key]["output_shape"][0] = batch_size
+            summary[m_key]["output_shape"] = _extract_shapes(output, batch_size)
 
             params = 0
-            if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                summary[m_key]["trainable"] = module.weight.requires_grad
-            if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size())))
+            for param in module.parameters():
+                params += torch.prod(torch.LongTensor(list(param.size())))
+                summary[m_key]["trainable"] = \
+                    summary[m_key].get("trainable", False) or param.requires_grad
             summary[m_key]["nb_params"] = params
 
         if (
@@ -74,24 +100,34 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     for h in hooks:
         h.remove()
 
-    summary_str += "----------------------------------------------------------------" + "\n"
-    line_new = "{:>20}  {:>25} {:>15}".format(
-        "Layer (type)", "Output Shape", "Param #")
+    (kStartLength, kMidLength, kEndLength, kTotalLength) = _overflow_sizes(summary)
+
+    summary_str += "-" * kTotalLength + "\n"
+    line_new = "{:>{kStartLength}} {:>{kMidLength}} {:>{kEndLength}}".format(
+        "Layer (type)", "Output Shape", "Param #",
+        kStartLength=kStartLength,
+        kMidLength=kMidLength,
+        kEndLength=kEndLength)
     summary_str += line_new + "\n"
-    summary_str += "================================================================" + "\n"
+    summary_str += "=" * kTotalLength + "\n"
     total_params = 0
     total_output = 0
     trainable_params = 0
+
     for layer in summary:
-        # input_shape, output_shape, trainable, nb_params
-        line_new = "{:>20}  {:>25} {:>15}".format(
+        # input_shape, output_shape, trainable nb_params
+        line_new = "{:>{kStartLength}} {:>{kMidLength}} {:>{kEndLength},}".format(
             layer,
             str(summary[layer]["output_shape"]),
-            "{0:,}".format(summary[layer]["nb_params"]),
+            summary[layer]["nb_params"],
+            kStartLength=kStartLength,
+            kMidLength=kMidLength,
+            kEndLength=kEndLength
         )
         total_params += summary[layer]["nb_params"]
-
-        total_output += np.prod(summary[layer]["output_shape"])
+        output_size = np.reshape(
+            _normalize_depth(summary[layer]["output_shape"]), (-1,))
+        total_output += np.prod(output_size)
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]
@@ -105,16 +141,16 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     total_params_size = abs(total_params * 4. / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
 
-    summary_str += "================================================================" + "\n"
+    summary_str += "=" * kTotalLength + "\n"
     summary_str += "Total params: {0:,}".format(total_params) + "\n"
     summary_str += "Trainable params: {0:,}".format(trainable_params) + "\n"
     summary_str += "Non-trainable params: {0:,}".format(total_params -
                                                         trainable_params) + "\n"
-    summary_str += "----------------------------------------------------------------" + "\n"
+    summary_str += "-" * kTotalLength + "\n"
     summary_str += "Input size (MB): %0.2f" % total_input_size + "\n"
     summary_str += "Forward/backward pass size (MB): %0.2f" % total_output_size + "\n"
     summary_str += "Params size (MB): %0.2f" % total_params_size + "\n"
     summary_str += "Estimated Total Size (MB): %0.2f" % total_size + "\n"
-    summary_str += "----------------------------------------------------------------" + "\n"
+    summary_str += "-" * kTotalLength + "\n"
     # return summary
     return summary_str, (total_params, trainable_params)
