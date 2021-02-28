@@ -58,29 +58,31 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
 
-            m_key = "%s-%i" % (class_name, module_idx + 1)
-            summary[m_key] = collections.OrderedDict()
-            summary[m_key]["input_shape"] = list(input[0].size())
-            summary[m_key]["input_shape"][0] = batch_size
+            m_key = '{name:s}-{idx:d}'.format(name=class_name, idx=module_idx + 1)
+            sum_layer = collections.OrderedDict()
+            summary[m_key] = sum_layer
+            sum_layer["input_shape"] = list(input[0].size())
+            sum_layer["input_shape"][0] = batch_size
             if isinstance(output, dict):
-                summary[m_key]["output_shape"] = [
+                sum_layer["output_shape"] = [
                     [-1] + list(o.size())[1:] for o in output.values()
                 ]
             elif isinstance(output, (list, tuple)):
-                summary[m_key]["output_shape"] = [
+                sum_layer["output_shape"] = [
                     [-1] + list(o.size())[1:] for o in output
                 ]
             else:
-                summary[m_key]["output_shape"] = list(output.size())
-                summary[m_key]["output_shape"][0] = batch_size
+                sum_layer["output_shape"] = list(output.size())
+                sum_layer["output_shape"][0] = batch_size
 
             params = 0
-            if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                summary[m_key]["trainable"] = module.weight.requires_grad
-            if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size())))
-            summary[m_key]["nb_params"] = params
+            params_trainable = 0
+            for param in module.parameters(recurse=False):
+                nb_param = torch.prod(torch.LongTensor(list(param.size())))
+                params += nb_param
+                params_trainable += nb_param if param.requires_grad else 0
+            sum_layer["nb_params"] = params
+            sum_layer["nb_params_trainable"] = params_trainable
 
         if (not isinstance(module, nn.Sequential) and not isinstance(module, nn.ModuleList)):
             hooks.append(module.register_forward_hook(hook))
@@ -159,9 +161,7 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
             total_output += np.sum(list(map(np.prod, output_shape)), dtype=np.int)
         else:
             total_output += np.prod(output_shape, dtype=np.int)
-        if "trainable" in sum_layer:
-            if sum_layer["trainable"] is True:
-                trainable_params += sum_layer["nb_params"]
+        trainable_params += sum_layer["nb_params_trainable"]
         summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
