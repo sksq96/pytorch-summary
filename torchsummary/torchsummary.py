@@ -93,7 +93,7 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
             params = 0
             params_trainable = 0
             for param in module.parameters(recurse=False):
-                nb_param = torch.prod(torch.LongTensor(list(param.size())))
+                nb_param = torch.prod(torch.LongTensor(list(param.size()))).item()
                 params += nb_param
                 params_trainable += nb_param if param.requires_grad else 0
             sum_layer["nb_params"] = params
