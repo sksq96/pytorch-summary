@@ -1,8 +1,20 @@
+import functools
 import collections
-import numpy as np
 
 import torch
 import torch.nn as nn
+
+
+def long_sum(v):
+    if not all(map(lambda x: isinstance(x, int), v)):
+        raise ValueError('The long_sum only supports the sequence with all int elements.')
+    return functools.reduce(lambda x, y: x + y, v)
+
+
+def long_prod(v):
+    if not all(map(lambda x: isinstance(x, int), v)):
+        raise ValueError('The long_sum only supports the sequence with all int elements.')
+    return functools.reduce(lambda x, y: x * y, v)
 
 
 def summary(model, input_size, batch_size=-1, device='cuda:0', dtypes=None):
@@ -158,14 +170,14 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
 
         output_shape = sum_layer["output_shape"]
         if isinstance(output_shape[0], (list, tuple)):
-            total_output += np.sum(list(map(np.prod, output_shape)), dtype=np.int)
+            total_output += long_sum(list(map(long_prod, output_shape)))
         else:
-            total_output += np.prod(output_shape, dtype=np.int)
+            total_output += long_prod(output_shape)
         trainable_params += sum_layer["nb_params_trainable"]
         summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
-    total_input_size = abs(np.sum(list(map(np.prod, input_size))) * batch_size * 4. / (1024 ** 2.))
+    total_input_size = abs(long_sum(list(map(long_prod, input_size))) * batch_size * 4. / (1024 ** 2.))
     total_output_size = abs(2. * total_output * 4. / (1024 ** 2.))  # x2 for gradients
     total_params_size = abs(total_params * 4. / (1024 ** 2.))
     total_size = total_params_size + total_output_size + total_input_size
