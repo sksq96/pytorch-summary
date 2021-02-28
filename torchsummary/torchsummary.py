@@ -73,7 +73,10 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
             m_key = '{name:s}-{idx:d}'.format(name=class_name, idx=module_idx + 1)
             sum_layer = collections.OrderedDict()
             summary[m_key] = sum_layer
-            sum_layer["input_shape"] = list(input[0].size())
+            if isinstance(input[0], dict):
+                sum_layer["input_shape"] = list(next(iter(input[0].values())).size())
+            else:
+                sum_layer["input_shape"] = list(input[0].size())
             sum_layer["input_shape"][0] = batch_size
             if isinstance(output, dict):
                 sum_layer["output_shape"] = [
