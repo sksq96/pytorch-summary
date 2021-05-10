@@ -1,3 +1,5 @@
+## Use the new and updated [torchinfo](https://github.com/TylerYep/torchinfo).
+
 ## Keras style `model.summary()` in PyTorch
 [![PyPI version](https://badge.fury.io/py/torchsummary.svg)](https://badge.fury.io/py/torchsummary)
 
