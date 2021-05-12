@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-
 from collections import OrderedDict
 import numpy as np
 
@@ -10,13 +8,12 @@ def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dty
     result, params_info = summary_string(
         model, input_size, batch_size, device, dtypes)
     print(result)
-
     return params_info
 
 
 def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
-    if dtypes == None:
-        dtypes = [torch.FloatTensor]*len(input_size)
+    if dtypes is None:
+        dtypes = [torch.FloatTensor] * len(input_size)
 
     summary_str = ''
 
@@ -46,8 +43,8 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key]["nb_params"] = params
 
         if (
-            not isinstance(module, nn.Sequential)
-            and not isinstance(module, nn.ModuleList)
+                not isinstance(module, nn.Sequential)
+                and not isinstance(module, nn.ModuleList)
         ):
             hooks.append(module.register_forward_hook(hook))
 
