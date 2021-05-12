@@ -31,7 +31,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key]["input_shape"][0] = batch_size
             if isinstance(output, (list, tuple)):
                 summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
+                    [-1] + list(o.size())[1:] for o in output if isinstance(o, (list, tuple))
                 ]
             else:
                 summary[m_key]["output_shape"] = list(output.size())
