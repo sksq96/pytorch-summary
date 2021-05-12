@@ -1,6 +1,7 @@
+from typing import Sequence
+
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 from collections import OrderedDict
 import numpy as np
@@ -29,6 +30,8 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key] = OrderedDict()
             summary[m_key]["input_shape"] = list(input[0].size())
             summary[m_key]["input_shape"][0] = batch_size
+            if isinstance(output, dict):
+                output = list(output.values())
             if isinstance(output, (list, tuple)):
                 summary[m_key]["output_shape"] = [
                     [-1] + list(o.size())[1:] for o in output
@@ -91,7 +94,12 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         )
         total_params += summary[layer]["nb_params"]
 
-        total_output += np.prod(summary[layer]["output_shape"])
+        # multiple outputs to the layer
+        output_size = summary[layer]["output_shape"]
+        if not isinstance(summary[layer]["output_shape"][0], Sequence):
+            output_size = [output_size]
+
+        total_output += sum(np.prod(out_size) for out_size in output_size)
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]

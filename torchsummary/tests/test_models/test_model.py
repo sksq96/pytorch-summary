@@ -54,3 +54,7 @@ class MultipleInputNetDifferentDtypes(nn.Module):
         # set x2 to FloatTensor
         x = torch.cat((x1, x2), 0)
         return F.log_softmax(x, dim=1)
+
+class DictOutputNet(SingleInputNet):
+    def forward(self, x):
+        return {"out": super(DictOutputNet, self).forward(x)}
