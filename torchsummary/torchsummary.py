@@ -1,24 +1,30 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 from collections import OrderedDict
 import numpy as np
 
 
-def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
-    result, params_info = summary_string(
-        model, input_size, batch_size, device, dtypes)
+def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
+    result, params_info = summary_string(model, input_size, batch_size, device, dtypes, recurse)
     print(result)
 
     return params_info
 
 
-def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
+def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
+    # multiple inputs to the network
+    if isinstance(input_size, tuple):
+        input_size = [input_size]
+
+    summary = _build_summary_dict(
+        model, input_size, batch_size, device, dtypes, recurse)
+    return _build_summary_string(summary, input_size, batch_size)
+
+
+def _build_summary_dict(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None, recurse=True):
     if dtypes == None:
         dtypes = [torch.FloatTensor]*len(input_size)
-
-    summary_str = ''
 
     def register_hook(module):
         def hook(module, input, output):
@@ -37,23 +43,20 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
                 summary[m_key]["output_shape"] = list(output.size())
                 summary[m_key]["output_shape"][0] = batch_size
 
-            params = 0
-            if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                summary[m_key]["trainable"] = module.weight.requires_grad
-            if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size())))
-            summary[m_key]["nb_params"] = params
+            nb_params = 0
+            trainable_params = 0
+            for name, p in module.named_parameters():
+                params = torch.numel(p)
+                nb_params += params
+                trainable_params += params if p.requires_grad else 0
+            summary[m_key]["nb_params"] = nb_params
+            summary[m_key]["trainable"] = trainable_params
 
         if (
             not isinstance(module, nn.Sequential)
             and not isinstance(module, nn.ModuleList)
         ):
             hooks.append(module.register_forward_hook(hook))
-
-    # multiple inputs to the network
-    if isinstance(input_size, tuple):
-        input_size = [input_size]
 
     # batch_size of 2 for batchnorm
     x = [torch.rand(2, *in_size).type(dtype).to(device=device)
@@ -64,7 +67,11 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     hooks = []
 
     # register hook
-    model.apply(register_hook)
+    if recurse:
+        model.apply(register_hook)
+    else:
+        [register_hook(m) for m in model.children()]
+        register_hook(model)
 
     # make a forward pass
     # print(x.shape)
@@ -74,6 +81,12 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
     for h in hooks:
         h.remove()
 
+    return summary
+
+
+def _build_summary_string(summary, input_size, batch_size=-1):
+
+    summary_str = ''
     summary_str += "----------------------------------------------------------------" + "\n"
     line_new = "{:>20}  {:>25} {:>15}".format(
         "Layer (type)", "Output Shape", "Param #")
@@ -89,12 +102,11 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             str(summary[layer]["output_shape"]),
             "{0:,}".format(summary[layer]["nb_params"]),
         )
-        total_params += summary[layer]["nb_params"]
+        total_params = summary[layer]["nb_params"]
 
         total_output += np.prod(summary[layer]["output_shape"])
         if "trainable" in summary[layer]:
-            if summary[layer]["trainable"] == True:
-                trainable_params += summary[layer]["nb_params"]
+            trainable_params = summary[layer]["trainable"]
         summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
