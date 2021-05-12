@@ -45,10 +45,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
                 params += torch.prod(torch.LongTensor(list(module.bias.size())))
             summary[m_key]["nb_params"] = params
 
-        if (
-            not isinstance(module, nn.Sequential)
-            and not isinstance(module, nn.ModuleList)
-        ):
+        if not any(module.children()):
             hooks.append(module.register_forward_hook(hook))
 
     # multiple inputs to the network
