@@ -33,6 +33,14 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
                 summary[m_key]["output_shape"] = [
                     [-1] + list(o.size())[1:] for o in output
                 ]
+            elif isinstance(output,OrderedDict):
+                keys = list(output.keys())
+                if 'out' in keys:
+                    key='out'
+                else:
+                    key = keys[-1]
+                summary[m_key]["output_shape"] = list(output[key].size())
+                summary[m_key]["output_shape"][0] = batch_size    
             else:
                 summary[m_key]["output_shape"] = list(output.size())
                 summary[m_key]["output_shape"][0] = batch_size
