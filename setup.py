@@ -8,4 +8,5 @@ setup(
     author="Shubham Chandel @sksq96",
     author_email="shubham.zeez@gmail.com",
     packages=["torchsummary"],
+    license="MIT",
 )
