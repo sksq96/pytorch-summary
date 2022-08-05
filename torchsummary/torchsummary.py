@@ -44,7 +44,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
 
             params = 0
             for p in module.parameters(recurse=False):
-                params += prod(list(p.size())))
+                params += np.prod(list(p.size()))
                 summary[m_key]["trainable"] |= p.requires_grad
             summary[m_key]["nb_params"] = params
 
