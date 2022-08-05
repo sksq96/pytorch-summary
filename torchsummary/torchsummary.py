@@ -43,6 +43,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
             summary[m_key]["output_shape"] = tree_map(tensor_size, input)
 
             params = 0
+            summary[m_key]["trainable"] = False
             for p in module.parameters(recurse=False):
                 params += np.prod(list(p.size()))
                 summary[m_key]["trainable"] |= p.requires_grad
