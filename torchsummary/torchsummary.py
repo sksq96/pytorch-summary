@@ -1,5 +1,6 @@
 import functools
 import collections
+import warnings
 
 import torch
 import torch.nn as nn
@@ -43,6 +44,26 @@ def summary(model, input_size, batch_size=-1, device='cuda:0', dtypes=None):
     return params_info
 
 
+def raise_no_tensor_error(module):
+    raise ValueError('The module {} does not return at list one tensor.'.format(module))
+
+
+def filter_not_array_like(input_data, module):
+    not_array_like = []
+    def _filter(x):
+        if hasattr(x, "size"):
+            return True
+        else:
+            not_array_like.append(x)
+            return False
+    f = list(filter(_filter, input_data))
+    if len(not_array_like) > 0:
+        warnings.warn(
+            'Output of module {} contains some elements which not like arrays or tensors.'.format(
+                module.__class__))
+    return f
+
+
 def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=None):
     '''Keras-style torch summary (string output)
     Iterate the whole pytorch model and summarize the infomation as a Keras-style
@@ -80,15 +101,24 @@ def summary_string(model, input_size, batch_size=-1, device='cuda:0', dtypes=Non
             sum_layer["input_shape"][0] = batch_size
             if isinstance(output, dict):
                 sum_layer["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output.values()
+                    [batch_size] + list(o.size())[1:] for o in filter_not_array_like(output.values(), module)
                 ]
+                if len(sum_layer["output_shape"]) == 0:
+                    raise_no_tensor_error(module)
             elif isinstance(output, (list, tuple)):
                 sum_layer["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
+                    [batch_size] + list(o.size())[1:] for o in filter_not_array_like(output, module)
                 ]
-            else:
+                if len(sum_layer["output_shape"]) == 0:
+                    raise_no_tensor_error(module)
+            elif output is None:
+                raise_no_tensor_error(module)
+            elif isinstance(output, torch.Tensor):
                 sum_layer["output_shape"] = list(output.size())
                 sum_layer["output_shape"][0] = batch_size
+            else:
+                raise ValueError('The output type {} of the module {} is not supported yet.'.format(
+                    type(output), module))
 
             params = 0
             params_trainable = 0
