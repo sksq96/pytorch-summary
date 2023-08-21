@@ -79,7 +79,7 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         "Layer (type)", "Output Shape", "Param #")
     summary_str += line_new + "\n"
     summary_str += "================================================================" + "\n"
-    total_params = 0
+    total_params = torch.tensor(0, dtype=int)
     total_output = 0
     trainable_params = 0
     for layer in summary:
