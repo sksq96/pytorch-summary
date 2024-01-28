@@ -6,6 +6,31 @@ from collections import OrderedDict
 import numpy as np
 
 
+def parse_tuple_list(output, batch_size):
+    if isinstance(output, (list, tuple)):
+        ret = []
+        for o in output:
+            ret.append(parse_tuple_list(o, batch_size))
+    elif output is None:
+        ret = [0, ]
+    else:
+        ret = list(output.size())
+        ret[0] = batch_size
+    return ret
+
+
+def prod_tuple_list(output_shape):
+    if isinstance(output_shape, (list, tuple)):
+        ret = 0
+        for o in output_shape:
+            ret += prod_tuple_list(o)
+    elif output_shape is None:
+        ret = 0
+    else:
+        ret = np.prod(output_shape)
+    return ret
+
+
 def summary(model, input_size, batch_size=-1, device=torch.device('cuda:0'), dtypes=None):
     result, params_info = summary_string(
         model, input_size, batch_size, device, dtypes)
@@ -27,15 +52,8 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
 
             m_key = "%s-%i" % (class_name, module_idx + 1)
             summary[m_key] = OrderedDict()
-            summary[m_key]["input_shape"] = list(input[0].size())
-            summary[m_key]["input_shape"][0] = batch_size
-            if isinstance(output, (list, tuple)):
-                summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
-                ]
-            else:
-                summary[m_key]["output_shape"] = list(output.size())
-                summary[m_key]["output_shape"][0] = batch_size
+            summary[m_key]["input_shape"] = parse_tuple_list(input, batch_size)
+            summary[m_key]["output_shape"] = parse_tuple_list(output, batch_size)
 
             params = 0
             if hasattr(module, "weight") and hasattr(module.weight, "size"):
@@ -91,15 +109,14 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         )
         total_params += summary[layer]["nb_params"]
 
-        total_output += np.prod(summary[layer]["output_shape"])
+        total_output += prod_tuple_list(summary[layer]["output_shape"])
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]
         summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
-    total_input_size = abs(np.prod(sum(input_size, ()))
-                           * batch_size * 4. / (1024 ** 2.))
+    total_input_size = abs(prod_tuple_list(input_size) * batch_size * 4. / (1024 ** 2.))
     total_output_size = abs(2. * total_output * 4. /
                             (1024 ** 2.))  # x2 for gradients
     total_params_size = abs(total_params * 4. / (1024 ** 2.))
