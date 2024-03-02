@@ -6,11 +6,22 @@ from collections import OrderedDict
 import numpy as np
 
 
-def parse_tuple_list(output, batch_size):
+def _parse_tuple_list(output, batch_size):
+    """Recursively parse all element in tuple/list in the arg 'output'
+
+    If the output is list/tuple, iterate over all element recursively to obtain the tensor shape.
+    Else if the output is None, use 0 as the tensor shape.
+    Else (the output is supposed to be a tensor) return cooresponding shape.
+
+    Args:
+        output (Union[list, tuple, Tensor]): output to be parsed
+        batch_size (int): specific batch_size
+    """
+
     if isinstance(output, (list, tuple)):
         ret = []
         for o in output:
-            ret.append(parse_tuple_list(o, batch_size))
+            ret.append(_parse_tuple_list(o, batch_size))
     elif output is None:
         ret = [0, ]
     else:
@@ -19,11 +30,20 @@ def parse_tuple_list(output, batch_size):
     return ret
 
 
-def prod_tuple_list(output_shape):
+def _prod_tuple_list(output_shape):
+    """Recursively calculate output size
+
+    If the output is list/tuple, iterate over all element recursively to obtain the tensor shape and accumulate them.
+    Else if the output is None, use 0 as the tensor size.
+    Else (the output is supposed to be a tensor) return it's size.
+
+    Args:
+        output_shape (Union[list, tuple, Tensor]): output_shape to be parsed
+    """
     if isinstance(output_shape, (list, tuple)):
         ret = 0
         for o in output_shape:
-            ret += prod_tuple_list(o)
+            ret += _prod_tuple_list(o)
     elif output_shape is None:
         ret = 0
     else:
@@ -52,8 +72,8 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
 
             m_key = "%s-%i" % (class_name, module_idx + 1)
             summary[m_key] = OrderedDict()
-            summary[m_key]["input_shape"] = parse_tuple_list(input, batch_size)
-            summary[m_key]["output_shape"] = parse_tuple_list(output, batch_size)
+            summary[m_key]["input_shape"] = _parse_tuple_list(input, batch_size)
+            summary[m_key]["output_shape"] = _parse_tuple_list(output, batch_size)
 
             params = 0
             if hasattr(module, "weight") and hasattr(module.weight, "size"):
@@ -109,14 +129,14 @@ def summary_string(model, input_size, batch_size=-1, device=torch.device('cuda:0
         )
         total_params += summary[layer]["nb_params"]
 
-        total_output += prod_tuple_list(summary[layer]["output_shape"])
+        total_output += _prod_tuple_list(summary[layer]["output_shape"])
         if "trainable" in summary[layer]:
             if summary[layer]["trainable"] == True:
                 trainable_params += summary[layer]["nb_params"]
         summary_str += line_new + "\n"
 
     # assume 4 bytes/number (float on cuda).
-    total_input_size = abs(prod_tuple_list(input_size) * batch_size * 4. / (1024 ** 2.))
+    total_input_size = abs(_prod_tuple_list(input_size) * batch_size * 4. / (1024 ** 2.))
     total_output_size = abs(2. * total_output * 4. /
                             (1024 ** 2.))  # x2 for gradients
     total_params_size = abs(total_params * 4. / (1024 ** 2.))
